@@ -48,14 +48,22 @@ def welcome():
     )
 
 
-# return precipitation data for previous year
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    results = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date > year_ago).all()
-    recent_prcp_json = jsonify(dict(results))
-    return recent_prcp_json
+    """Return a list of dates and precipitation observations"""
+    # Query all dates and precipitation observations last year from the measurement table
 
-# return a json list of stations from the dataset.
+    prcp_results = session.query(Measurement.date, Measurement.prcp).\
+        filter(Measurement.date.between('2016-08-23', '2017-08-23')).all()
+
+    precipitation = []
+    for result in prcp_results:
+        row = {"date": "prcp"}
+        row["date"] = result[0]
+        row["prcp"] = float(result[1])
+        precipitation.append(row)
+
+    return jsonify(precipitation)
 
 
 @app.route("/api/v1.0/stations")
@@ -71,9 +79,16 @@ def stations():
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-    recent_tobs = session.query(Measurement.date, Measurement.tobs).filter(Measurement.date > year_ago).all()
-    recent_tobs_json = jsonify(dict(recent_tobs))
-    return recent_tobs_json
+    tobs_results = session.query(Measurement.station, Measurement.tobs).filter(Measurement.date.between('2016-08-01', '2017-08-01')).all()
+
+    tobs_list = []
+    for tobs in tobs_results:
+        tobs_dict = {}
+        tobs_dict["station"] = tobs[0]
+        tobs_dict["tobs"] = float(tobs[1])
+
+        tobs_list.append(tobs_dict)
+    return jsonify(tobs_list)
 
 # return a json list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
 # cannot get these to run
@@ -107,5 +122,5 @@ def startend(start, end):
     return jsonify(temp_dict)
 
 
-if __name__ == "__main__":
-    app.run()
+if __name__ == '__main__':
+    app.run(debug=True)
